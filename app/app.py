@@ -1,4 +1,5 @@
 import math
+import base64
 import joblib
 import pandas as pd
 import streamlit as st
@@ -12,7 +13,7 @@ st.set_page_config(
     page_title="ChurnIQ | Customer Intelligence",
     page_icon="◆",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # =========================================================
@@ -41,7 +42,33 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 [data-testid="stSidebar"] * { color: #dfe8ff; }
 .block-container { padding-top: 1.4rem; max-width: 1500px; }
 
-/* ---------- brand ---------- */
+/* ---------- top brand bar ---------- */
+.topbrand {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:18px; padding:0 2px;
+}
+.topbrand-left { display:flex; align-items:center; gap:12px; }
+.topbrand-logo {
+    width:42px; height:42px; border-radius:12px;
+    background:linear-gradient(135deg,#6366f1,#22d3ee);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:900; color:white;
+    box-shadow:0 8px 20px rgba(99,102,241,.45);
+}
+.topbrand-name { font-size:21px; font-weight:900; color:#fff; letter-spacing:.3px; line-height:1.1; }
+.topbrand-tag  { font-size:10.5px; font-weight:700; letter-spacing:2px; color:#7f8fc5; margin-top:2px; }
+.topbrand-status {
+    display:inline-flex; align-items:center; gap:7px;
+    background:rgba(52,211,153,.10); border:1px solid rgba(52,211,153,.30);
+    color:#6ee7b7; font-size:11.5px; font-weight:700;
+    padding:6px 14px; border-radius:999px;
+}
+.topbrand-dot {
+    width:7px; height:7px; border-radius:50%; background:#34d399;
+    box-shadow:0 0 8px #34d399;
+}
+
+/* ---------- brand (legacy / unused now) ---------- */
 .brand { display:flex; align-items:center; gap:11px; margin-bottom:4px; }
 .brand-logo {
     width:38px; height:38px; border-radius:11px;
@@ -259,57 +286,63 @@ def playbook(row: dict, p: float) -> list[str]:
     return tips[:4] or ["No strong risk flags — standard customer care."]
 
 
+
+
 def donut_svg(p: float, colors: tuple[str, str]) -> str:
-    r, c = 62, 2 * math.pi * 62
+    r = 66
+    c = 2 * math.pi * r
     offset = c * (1 - p)
+
     return f"""
-    <svg width="168" height="168" viewBox="0 0 168 168">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="180" height="180" viewBox="0 0 180 180">
       <defs>
-        <linearGradient id="dg" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id="donutGradient">
           <stop offset="0%" stop-color="{colors[0]}"/>
           <stop offset="100%" stop-color="{colors[1]}"/>
         </linearGradient>
       </defs>
-      <circle cx="84" cy="84" r="{r}" fill="none" stroke="#1c2a4d" stroke-width="13"/>
-      <circle cx="84" cy="84" r="{r}" fill="none" stroke="url(#dg)" stroke-width="13"
-        stroke-linecap="round" stroke-dasharray="{c:.1f}" stroke-dashoffset="{offset:.1f}"
-        transform="rotate(-90 84 84)"/>
-      <text x="84" y="80" text-anchor="middle" fill="#ffffff" font-size="29"
-        font-weight="800" font-family="Inter">{p:.0%}</text>
-      <text x="84" y="103" text-anchor="middle" fill="#8296c2" font-size="10"
-        font-weight="700" letter-spacing="2" font-family="Inter">CHURN RISK</text>
+
+      <circle cx="90" cy="90" r="{r}"
+        fill="none" stroke="#1c2a4d" stroke-width="13"/>
+
+      <circle cx="90" cy="90" r="{r}"
+        fill="none" stroke="url(#donutGradient)" stroke-width="13"
+        stroke-linecap="round"
+        stroke-dasharray="{c:.2f}"
+        stroke-dashoffset="{offset:.2f}"
+        transform="rotate(-90 90 90)"/>
+
+      <text x="90" y="86" text-anchor="middle"
+        fill="white" font-size="29" font-weight="800">{p:.0%}</text>
+
+      <text x="90" y="110" text-anchor="middle"
+        fill="#8296c2" font-size="9" font-weight="700"
+        letter-spacing="0.5">CHURN PROBABILITY</text>
     </svg>
     """
 
+
+
 # =========================================================
-# 4. SIDEBAR
+# 4. TOP BRAND BAR  ← NEW (app name + icon)
 # =========================================================
-with st.sidebar:
-    st.markdown("""
-    <div class="brand">
-      <div class="brand-logo">C</div>
-      <div>
-        <div class="brand-name">ChurnIQ</div>
-        <div class="brand-tag">CUSTOMER INTELLIGENCE</div>
-      </div>
+
+st.markdown("""
+<div class="topbrand">
+  <div class="topbrand-left">
+    <div class="topbrand-logo">◆</div>
+    <div>
+      <div class="topbrand-name">ChurnIQ</div>
+      <div class="topbrand-tag">CUSTOMER INTELLIGENCE PLATFORM</div>
     </div>
-    """, unsafe_allow_html=True)
-    st.divider()
-    st.markdown("**🟣 Churn Prediction**  · active")
-    st.markdown("⚪ Batch Scoring *(soon)*")
-    st.markdown("⚪ Model Monitoring *(soon)*")
-    st.divider()
-    st.markdown("**🤖 Model**")
-    st.caption("Algorithm · Logistic Regression")
-    st.caption("Task · Binary classification")
-    st.caption("Features · 19")
-    st.divider()
-    st.markdown("**🎚️ Risk bands**")
-    st.caption("🟢 Low  ·  below 35%")
-    st.caption("🟡 Medium  ·  35% – 60%")
-    st.caption("🔴 High  ·  above 60%")
-    st.divider()
-    st.caption("Python · Pandas · Scikit-learn · Streamlit")
+  </div>
+  <div class="topbrand-status">
+    <span class="topbrand-dot"></span>
+    Model Online
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # =========================================================
 # 5. HERO
@@ -445,13 +478,23 @@ with result_col:
         flags_html = "".join(f'<span class="flag">{f}</span>' for f in r["flags"]) \
                      or '<span class="flag">✨ No major risk flags</span>'
 
+        # Encode the SVG as a data URI so Streamlit's Markdown HTML sanitizer
+        # does not strip the SVG drawing elements.
+        donut_data = base64.b64encode(
+            donut_svg(p, band_colors).encode("utf-8")
+        ).decode("ascii")
+
         st.markdown(f"""
         <div class="result-shell">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span class="risk-chip chip-{band}">{band_label}</span>
             <span style="color:#7d90b8; font-size:11px; font-weight:600;">MODEL OUTPUT</span>
           </div>
-          <div class="donut-wrap">{donut_svg(p, band_colors)}</div>
+          <div class="donut-wrap">
+            <img src="data:image/svg+xml;base64,{donut_data}"
+                 width="190" height="190"
+                 style="display:block; margin:auto;" alt="Churn probability: {p:.0%}">
+          </div>
           <div style="text-align:center; color:#fff; font-weight:800; font-size:17px; margin-bottom:14px;">
             {headline}
           </div>
@@ -461,18 +504,33 @@ with result_col:
 
         st.progress(min(max(p, 0.0), 1.0))
 
+        st.caption(
+                    "This percentage is the model's estimated probability "
+                    "that the customer will churn. It is not a guarantee."
+                  )
+
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
         st.markdown('<div class="group-label">📋 Recommended actions</div>', unsafe_allow_html=True)
-        st.markdown('<div class="result-shell" style="padding:8px 20px;">', unsafe_allow_html=True)
-        for i, tip in enumerate(r["actions"], 1):
-            st.markdown(
-                f'<div class="action-item"><span class="action-num">{i}</span><span>{tip}</span></div>',
-                unsafe_allow_html=True,
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Render the whole card in one HTML block so Streamlit does not leave
+        # an empty outlined container between separate markdown calls.
+        actions_html = "".join(
+            f'<div class="action-item"><span class="action-num">{i}</span><span>{tip}</span></div>'
+            for i, tip in enumerate(r["actions"], 1)
+        )
+        st.markdown(
+            f'<div class="result-shell" style="padding:8px 20px;">{actions_html}</div>',
+            unsafe_allow_html=True,
+        )
 
         with st.expander("🔎 View input summary"):
-            st.dataframe(pd.DataFrame([r["row"]]), use_container_width=True, hide_index=True)
+            # Keep the summary compact vertically; Streamlit's table supports
+            # horizontal scrolling when all 19 feature columns do not fit.
+            st.dataframe(
+                pd.DataFrame([r["row"]]),
+                use_container_width=True,
+                hide_index=True,
+                height=105,
+            )
 
 # =========================================================
 # 8. FOOTER
