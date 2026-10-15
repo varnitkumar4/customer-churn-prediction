@@ -34,18 +34,29 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     color: #eef3ff;
 }
 
-[data-testid="stHeader"] { background: rgba(10,15,30,.80); backdrop-filter: blur(10px); }
+[data-testid="stHeader"] {
+    background: rgba(10,15,30,.80);
+    backdrop-filter: blur(10px);
+    height: 2.5rem;
+}
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0e1630 0%, #0b1226 100%);
     border-right: 1px solid #22315a;
 }
 [data-testid="stSidebar"] * { color: #dfe8ff; }
-.block-container { padding-top: 1.4rem; max-width: 1500px; }
-
+.block-container {
+    padding-top: 3rem;
+    padding-bottom: 1rem;
+    max-width: 1500px;
+}
 /* ---------- top brand bar ---------- */
 .topbrand {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:18px; padding:0 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    margin-bottom: 18px;
+    padding: 4px 2px;
 }
 .topbrand-left { display:flex; align-items:center; gap:12px; }
 .topbrand-logo {
